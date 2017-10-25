@@ -127,6 +127,26 @@ $(document).ready(function () {
 <div id="loading-the-data" class="section level2">
 <h2>Loading the data</h2>
 <p>This project is so interesting and relevant to my life!</p>
+<pre class="r"><code>ct &lt;- house_elections %&gt;%
+  filter(state == &quot;CT&quot;) %&gt;%
+  select(-c(fec_id, incumbent, state))
+  
+ct</code></pre>
+<pre><code>## # A tibble: 32 x 7
+##    district       candidate_name party primary_votes runoff_votes
+##       &lt;chr&gt;                &lt;chr&gt; &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;
+##  1       02         Novak, Daria     R          7050            0
+##  2       02       Dubitsky, Doug     R             0            0
+##  3       03     DeLauro, Rosa L.     W             0            0
+##  4       05      Bernier, Justin     R          6167            0
+##  5       05        Pistone, John     W             0            0
+##  6       05      Greenberg, Mark     R          8033            0
+##  7       04     Wieland, Richard     R             0            0
+##  8       01 McDonald, Michael W.     R             0            0
+##  9       01   Decker, John Henry     R             0            0
+## 10       01   DeRosa, S. Michael     G             0            0
+## # ... with 22 more rows, and 2 more variables: general_votes &lt;int&gt;,
+## #   ge_winner &lt;chr&gt;</code></pre>
 </div>
 
 
