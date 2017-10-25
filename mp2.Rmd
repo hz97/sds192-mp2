@@ -21,8 +21,22 @@ library(tidyverse)
 ```{r, message=FALSE}
 ct <- house_elections %>%
   filter(state == "CT") %>%
-  select(-c(fec_id, incumbent, state))
+  select(-fec_id, -incumbent, -state) %>%
+  group_by(party) %>%
+  arrange(district)
   
 ct
+
+ct_party <- ct %>%
+  summarize(N = n(),
+            dist1 = sum(ifelse(district == '01', 1, 0)),
+            dist2 = sum(ifelse(district == '02', 1, 0)),
+            dist3 = sum(ifelse(district == '03', 1, 0)),
+            dist4 = sum(ifelse(district == '04', 1, 0)),
+            dist5 = sum(ifelse(district == '05', 1, 0)),
+            primary = sum(primary_votes),
+            general = sum(general_votes))
+
+ct_party
 ```
   

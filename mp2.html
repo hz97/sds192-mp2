@@ -129,24 +129,47 @@ $(document).ready(function () {
 <p>This project is so interesting and relevant to my life!</p>
 <pre class="r"><code>ct &lt;- house_elections %&gt;%
   filter(state == &quot;CT&quot;) %&gt;%
-  select(-c(fec_id, incumbent, state))
+  select(-fec_id, -incumbent, -state) %&gt;%
+  group_by(party) %&gt;%
+  arrange(district)
   
 ct</code></pre>
 <pre><code>## # A tibble: 32 x 7
-##    district       candidate_name party primary_votes runoff_votes
-##       &lt;chr&gt;                &lt;chr&gt; &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;
-##  1       02         Novak, Daria     R          7050            0
-##  2       02       Dubitsky, Doug     R             0            0
-##  3       03     DeLauro, Rosa L.     W             0            0
-##  4       05      Bernier, Justin     R          6167            0
-##  5       05        Pistone, John     W             0            0
-##  6       05      Greenberg, Mark     R          8033            0
-##  7       04     Wieland, Richard     R             0            0
-##  8       01 McDonald, Michael W.     R             0            0
-##  9       01   Decker, John Henry     R             0            0
-## 10       01   DeRosa, S. Michael     G             0            0
+## # Groups:   party [6]
+##    district        candidate_name party primary_votes runoff_votes
+##       &lt;chr&gt;                 &lt;chr&gt; &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;
+##  1       01  McDonald, Michael W.     R             0            0
+##  2       01    Decker, John Henry     R             0            0
+##  3       01    DeRosa, S. Michael     G             0            0
+##  4       01     Corey, Matthew M.     P             0            0
+##  5       01       Larson, John B.     W             0            0
+##  6       02          Novak, Daria     R          7050            0
+##  7       02        Dubitsky, Doug     R             0            0
+##  8       02        Courtney, Joe      W             0            0
+##  9       02 Coutu, Christopher D.     R             0            0
+## 10       02      Formica, Paul M.     R         14256            0
 ## # ... with 22 more rows, and 2 more variables: general_votes &lt;int&gt;,
 ## #   ge_winner &lt;chr&gt;</code></pre>
+<pre class="r"><code>ct_party &lt;- ct %&gt;%
+  summarize(N = n(),
+            dist1 = sum(ifelse(district == '01', 1, 0)),
+            dist2 = sum(ifelse(district == '02', 1, 0)),
+            dist3 = sum(ifelse(district == '03', 1, 0)),
+            dist4 = sum(ifelse(district == '04', 1, 0)),
+            dist5 = sum(ifelse(district == '05', 1, 0)),
+            primary = sum(primary_votes),
+            general = sum(general_votes))
+
+ct_party</code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   party     N dist1 dist2 dist3 dist4 dist5 primary general
+##   &lt;chr&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
+## 1     D     4     0     0     0     0     4   28515  146098
+## 2     G     2     1     1     0     0     0       0    9115
+## 3     L     1     0     1     0     0     0       0    3511
+## 4     P     1     1     0     0     0     0       0    2290
+## 5     R    17     2     4     2     4     5   51008  500291
+## 6     W     7     1     1     2     1     2       0  805206</code></pre>
 </div>
 
 
