@@ -158,18 +158,389 @@ ct</code></pre>
             dist4 = sum(ifelse(district == '04', 1, 0)),
             dist5 = sum(ifelse(district == '05', 1, 0)),
             primary = sum(primary_votes),
-            general = sum(general_votes))
+            general = sum(general_votes)) %&gt;%
+  arrange(desc(general))
 
 ct_party</code></pre>
 <pre><code>## # A tibble: 6 x 9
 ##   party     N dist1 dist2 dist3 dist4 dist5 primary general
 ##   &lt;chr&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;int&gt;   &lt;int&gt;
-## 1     D     4     0     0     0     0     4   28515  146098
-## 2     G     2     1     1     0     0     0       0    9115
-## 3     L     1     0     1     0     0     0       0    3511
-## 4     P     1     1     0     0     0     0       0    2290
-## 5     R    17     2     4     2     4     5   51008  500291
-## 6     W     7     1     1     2     1     2       0  805206</code></pre>
+## 1     W     7     1     1     2     1     2       0  805206
+## 2     R    17     2     4     2     4     5   51008  500291
+## 3     D     4     0     0     0     0     4   28515  146098
+## 4     G     2     1     1     0     0     0       0    9115
+## 5     L     1     0     1     0     0     0       0    3511
+## 6     P     1     1     0     0     0     0       0    2290</code></pre>
+<pre class="r"><code>party_by_state &lt;- function(state_arg) {
+  house_elections %&gt;%
+  filter(state == state_arg) %&gt;%
+  select(-fec_id, -incumbent, -state) %&gt;%
+  group_by(party) %&gt;%
+  summarize(N = n(),
+            primary = sum(primary_votes),
+            general = sum(general_votes)) %&gt;%
+  arrange(desc(general))
+}
+
+winner_party &lt;- function(state_arg) {
+  partydata &lt;- party_by_state(state_arg) 
+  general_winner &lt;- partydata[1,]
+  partydata %&gt;% summarize(state = state_arg,
+                          party = general_winner$party,
+                          ratio = general_winner$general/sum(general))
+}
+
+party &lt;- function(state_arg, party_arg) {
+  partydata &lt;- party_by_state(state_arg) 
+  votes &lt;- partydata %&gt;% subset(party == party_arg)
+  partydata %&gt;% summarize(state = state_arg,
+                          ratio = votes$general[1]/sum(general))
+}
+
+d_party &lt;- function(state_arg) {
+  party(state_arg, &quot;D&quot;) 
+}
+
+states &lt;- house_elections %&gt;% 
+  select(state) %&gt;%
+  unique()
+
+lapply(states$state, d_party)</code></pre>
+<pre><code>## [[1]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    CA 0.6057429
+## 
+## [[2]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    AK 0.2871036
+## 
+## [[3]]
+## # A tibble: 1 x 2
+##   state    ratio
+##   &lt;chr&gt;    &lt;dbl&gt;
+## 1    AL 0.359862
+## 
+## [[4]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    AR 0.2935974
+## 
+## [[5]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    AS 0.5857296
+## 
+## [[6]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    AZ 0.4357369
+## 
+## [[7]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    CO 0.4408507
+## 
+## [[8]]
+## # A tibble: 1 x 2
+##   state      ratio
+##   &lt;chr&gt;      &lt;dbl&gt;
+## 1    CT 0.09962285
+## 
+## [[9]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    DC 0.9402238
+## 
+## [[10]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    DE 0.6440593
+## 
+## [[11]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    FL 0.4515055
+## 
+## [[12]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    GA 0.4077201
+## 
+## [[13]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    HI 0.6745129
+## 
+## [[14]]
+## # A tibble: 1 x 2
+##   state   ratio
+##   &lt;chr&gt;   &lt;dbl&gt;
+## 1    IA 0.50303
+## 
+## [[15]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    ID 0.3282841
+## 
+## [[16]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    IL 0.5424403
+## 
+## [[17]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    IN 0.4474031
+## 
+## [[18]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    KS 0.1848329
+## 
+## [[19]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    KY 0.3886645
+## 
+## [[20]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    LA 0.2105924
+## 
+## [[21]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MA 0.7225376
+## 
+## [[22]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MD 0.6364047
+## 
+## [[23]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MI 0.4849907
+## 
+## [[24]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MN 0.5559404
+## 
+## [[25]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MO 0.4183864
+## 
+## [[26]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MS 0.3405119
+## 
+## [[27]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    MT 0.4271876
+## 
+## [[28]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    NC 0.5060518
+## 
+## [[29]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    ND 0.4178849
+## 
+## [[30]]
+## # A tibble: 1 x 2
+##   state    ratio
+##   &lt;chr&gt;    &lt;dbl&gt;
+## 1    NE 0.357584
+## 
+## [[31]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    NH 0.4998768
+## 
+## [[32]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    NJ 0.5678817
+## 
+## [[33]]
+## # A tibble: 1 x 2
+##   state    ratio
+##   &lt;chr&gt;    &lt;dbl&gt;
+## 1    NV 0.465534
+## 
+## [[34]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    NY 0.6408427
+## 
+## [[35]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    OH 0.4693197
+## 
+## [[36]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    OK 0.3094601
+## 
+## [[37]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    OR 0.5567989
+## 
+## [[38]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    PA 0.4838464
+## 
+## [[39]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    RI 0.5445064
+## 
+## [[40]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    SC 0.4146094
+## 
+## [[41]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    SD 0.4255027
+## 
+## [[42]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    TN 0.3487925
+## 
+## [[43]]
+## # A tibble: 1 x 2
+##   state    ratio
+##   &lt;chr&gt;    &lt;dbl&gt;
+## 1    TX 0.384893
+## 
+## [[44]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    UT 0.3246671
+## 
+## [[45]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    VA 0.4837272
+## 
+## [[46]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    VI 0.6008978
+## 
+## [[47]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    WA 0.5507935
+## 
+## [[48]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    WI 0.5048322
+## 
+## [[49]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    WV 0.4008722
+## 
+## [[50]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    GU 0.6033272
+## 
+## [[51]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    ME 0.6166307
+## 
+## [[52]]
+## # A tibble: 1 x 2
+##   state ratio
+##   &lt;chr&gt; &lt;dbl&gt;
+## 1    MP    NA
+## 
+## [[53]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    NM 0.5663485
+## 
+## [[54]]
+## # A tibble: 1 x 2
+##   state ratio
+##   &lt;chr&gt; &lt;dbl&gt;
+## 1    PR    NA
+## 
+## [[55]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    VT 0.7201472
+## 
+## [[56]]
+## # A tibble: 1 x 2
+##   state     ratio
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1    WY 0.2386891</code></pre>
 </div>
 
 

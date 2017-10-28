@@ -35,8 +35,45 @@ ct_party <- ct %>%
             dist4 = sum(ifelse(district == '04', 1, 0)),
             dist5 = sum(ifelse(district == '05', 1, 0)),
             primary = sum(primary_votes),
-            general = sum(general_votes))
+            general = sum(general_votes)) %>%
+  arrange(desc(general))
 
 ct_party
+
+party_by_state <- function(state_arg) {
+  house_elections %>%
+  filter(state == state_arg) %>%
+  select(-fec_id, -incumbent, -state) %>%
+  group_by(party) %>%
+  summarize(N = n(),
+            primary = sum(primary_votes),
+            general = sum(general_votes)) %>%
+  arrange(desc(general))
+}
+
+winner_party <- function(state_arg) {
+  partydata <- party_by_state(state_arg) 
+  general_winner <- partydata[1,]
+  partydata %>% summarize(state = state_arg,
+                          party = general_winner$party,
+                          ratio = general_winner$general/sum(general))
+}
+
+party <- function(state_arg, party_arg) {
+  partydata <- party_by_state(state_arg) 
+  votes <- partydata %>% subset(party == party_arg)
+  partydata %>% summarize(state = state_arg,
+                          ratio = votes$general[1]/sum(general))
+}
+
+d_party <- function(state_arg) {
+  party(state_arg, "D") 
+}
+
+states <- house_elections %>% 
+  select(state) %>%
+  unique()
+
+lapply(states$state, d_party)
 ```
   
