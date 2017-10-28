@@ -70,10 +70,44 @@ d_party <- function(state_arg) {
   party(state_arg, "D") 
 }
 
+comparison <- function(state_arg) {
+  partydata <- party_by_state(state_arg) 
+  winner_party <- partydata[1,]
+  dem <- partydata %>% subset(party == "D")
+  rep <- partydata %>% subset(party == "R")
+  partydata %>% summarize(state = state_arg,
+                          total_votes = sum(general),
+                          winner = winner_party$party[1],
+                          dem_votes = dem$general[1],
+                          dem_ratio = dem_votes/total_votes,
+                          rep_votes = rep$general[1],
+                          rep_ratio = rep_votes/total_votes)
+}
+
+swing_states <- function(state_arg) {
+  partydata <- party_by_state(state_arg) 
+  winner_party <- partydata[1,]
+  dem <- partydata %>% subset(party == "D")
+  rep <- partydata %>% subset(party == "R")
+  partydata %>% summarize(state = state_arg,
+                          total_votes = sum(general),
+                          winner = winner_party$party[1],
+                          dem_votes = dem$general[1],
+                          rep_votes = rep$general[1],
+                          dem_vs_rep = dem_votes/rep_votes,
+                          swing = abs(dem_vs_rep-1))
+}
+
 states <- house_elections %>% 
   select(state) %>%
   unique()
 
-lapply(states$state, d_party)
+swing_data <- lapply(states$state, swing_states) %>%
+  bind_rows() %>%
+  filter(swing < 0.1) %>%
+  arrange(swing)
+
+swing_data
+
 ```
   
