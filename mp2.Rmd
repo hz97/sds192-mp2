@@ -25,6 +25,8 @@ theme_swing <- function () {
       text = element_text(family = "Avenir"),
       axis.title.x = element_text(size = 20, color = "black",
                                   margin = margin(8,0,0,0,"pt")),
+      axis.text.x = element_text(size = 20, color = "black",
+                                  margin = margin(6,0,0,0,"pt")),
       axis.text.y = element_text(size = 20, color = "black",
                                   margin = margin(0,6,0,0,"pt")),
       plot.title = element_text(face = 2, 
@@ -43,7 +45,6 @@ theme_swing <- function () {
 party_by_state <- function(state_arg) {
   house_elections %>%
   filter(state == state_arg) %>%
-  select(-fec_id, -incumbent, -state) %>%
   group_by(party) %>%
   summarize(N = n(),
             primary = sum(primary_votes),
@@ -67,15 +68,14 @@ swing <- function(state_arg) {
 states <- house_elections %>% 
   select(state) %>%
   unique()
+states <- states$state
 
-top_10_swing <- lapply(states$state, swing) %>%
+top_10_swing <- lapply(states, swing) %>%
   bind_rows() %>%
   filter(abs(dem_vs_rep-1) < 0.1) %>%
   arrange(abs(dem_vs_rep-1))
 
-swing_states <- top_10_swing %>% 
-  select(state) %>%
-  unique()
+swing_states <- top_10_swing$state
 
 swing_district <- function(state_arg) {
   house_elections %>%
@@ -85,15 +85,15 @@ swing_district <- function(state_arg) {
               total = sum(general_votes),
               D = sum(ifelse(party == "D", general_votes, 0))/total*100,
               R = sum(ifelse(party == "R", general_votes, 0))/total*100,
-              others = 100-D-R) %>%
-    gather("party", "percentage", 4:6) %>%
-    mutate(party = factor(party, levels = c("D", "R", "others"), 
-                          labels = c("Democrat", "Republican", "others"))) %>%
-    arrange(district)
+              others = 100-D-R)
 }
 
 swing_district_graph <- function(state_arg) {
-  swing_district(state_arg) %>%
+  swing_district(state_arg)  %>%
+    gather("party", "percentage", 4:6) %>%
+    mutate(party = factor(party, levels = c("D", "R", "others"), 
+                          labels = c("Democrat", "Republican", "others"))) %>%
+    arrange(district) %>%
     ggplot(aes(x = district, y = percentage, fill = party)) +
     geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
     ggtitle(label = state_arg) +
@@ -108,12 +108,99 @@ swing_district_graph <- function(state_arg) {
     theme_swing()
 }
 
-plots <- lapply(swing_states$state, swing_district_graph)
+plots <- lapply(swing_states, swing_district_graph)
 
 i <- 0
 while (i < length(plots)) {
   i <- i + 1
   print(plots[[i]])  
 }
+
+tie_contribution <- function(state_arg) {
+  tie <- swing_district(state_arg) %>%
+    slice(which.min(abs(D - R)))
+  
+  tie <- house_elections %>%
+    filter(state == state_arg, district %in% tie$district, general_votes != 0) %>%
+    select(fec_id, state, district, general_votes, party, ge_winner)
+  
+  colnames(tie)[1] <- "cand_id"
+  
+  contributions %>%
+    filter(cand_id %in% tie$cand_id) %>%
+    select(cand_id, transaction_amt) %>%
+    group_by(cand_id) %>%
+    summarize(contribution = sum(transaction_amt)) %>%
+    inner_join(tie, by = "cand_id")
+}
+
+dem_adv_contribution <- function(state_arg) {
+  dem_adv <- swing_district(state_arg) %>%
+    slice(which.max(D))
+  
+  dem_adv <- house_elections %>%
+    filter(state == state_arg, district %in% dem_adv$district, general_votes != 0) %>%
+    select(fec_id, state, district, general_votes, party, ge_winner)
+  
+  colnames(dem_adv)[1] <- "cand_id"
+  
+  contributions %>%
+    filter(cand_id %in% dem_adv$cand_id) %>%
+    select(cand_id, transaction_amt) %>%
+    group_by(cand_id) %>%
+    summarize(contribution = sum(transaction_amt)) %>%
+    inner_join(dem_adv, by = "cand_id")
+}
+
+rep_adv_contribution <- function(state_arg) {
+  rep_adv <- swing_district(state_arg) %>%
+    slice(which.max(R))
+  
+  rep_adv <- house_elections %>%
+    filter(state == state_arg, district %in% rep_adv$district, general_votes != 0) %>%
+    select(fec_id, state, district, general_votes, party, ge_winner)
+  
+  colnames(rep_adv)[1] <- "cand_id"
+  
+  contributions %>%
+    filter(cand_id %in% rep_adv$cand_id) %>%
+    select(cand_id, transaction_amt) %>%
+    group_by(cand_id) %>%
+    summarize(contribution = sum(transaction_amt)) %>%
+    inner_join(rep_adv, by = "cand_id")
+}
+
+contribution_graph <- function(fun_arg) {
+  contribution <- lapply(swing_states, fun_arg) %>%
+    bind_rows 
+  
+  parties <- contribution$party
+  i <- 0
+  while (i < length(parties)) {
+    i <- i + 1
+    if (parties[[i]] != "D" && parties[[i]] != "R") {
+      parties[[i]] = "others"
+    }
+  }
+  
+  contribution %>% mutate(party = parties) %>%
+    mutate(party = factor(party, levels = c("D", "R", "others"), 
+                          labels = c("Democrat", "Republican", "others"))) %>%
+    ggplot(aes(x = state, y = contribution, fill = party)) +
+    geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
+    scale_fill_manual("legend", values = c("#5DA2F5", "#F77471", "#1EB742")) +
+    scale_x_discrete(name = NULL,
+                     limits = swing_states,
+                     expand = c(0, 0)) +
+    scale_y_continuous(name = "Total Contribution Received (million)",
+                       breaks = seq(0, 12500000, 2500000),
+                       labels = seq(0, 12.5, 2.5),
+                       expand = c(0, 0)) +
+    theme_swing()
+}
+
+contribution_graph(tie_contribution)
+contribution_graph(dem_adv_contribution)
+contribution_graph(rep_adv_contribution)
 ```
   
