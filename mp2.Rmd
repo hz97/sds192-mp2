@@ -25,6 +25,8 @@ theme_swing <- function () {
       text = element_text(family = "Avenir"),
       axis.title.x = element_text(size = 20, color = "black",
                                   margin = margin(8,0,0,0,"pt")),
+      axis.title.y = element_text(size = 17, color = "black",
+                                  margin = margin(0,8,0,0,"pt")),
       axis.text.x = element_text(size = 20, color = "black",
                                   margin = margin(6,0,0,0,"pt")),
       axis.text.y = element_text(size = 20, color = "black",
@@ -192,15 +194,23 @@ contribution_graph <- function(fun_arg) {
     scale_x_discrete(name = NULL,
                      limits = swing_states,
                      expand = c(0, 0)) +
-    scale_y_continuous(name = "Total Contribution Received (million)",
+    scale_y_continuous(name = "Total Contribution (million)",
                        breaks = seq(0, 12500000, 2500000),
                        labels = seq(0, 12.5, 2.5),
                        expand = c(0, 0)) +
-    theme_swing()
+    theme_swing() +
+    theme(plot.title = element_text(face = 2, 
+                                    size = 20,
+                                    margin = margin(0,0,5,0,"pt"),
+                                    hjust = 0.5),
+          legend.position = "bottom")
 }
 
-contribution_graph(tie_contribution)
-contribution_graph(dem_adv_contribution)
-contribution_graph(rep_adv_contribution)
+contribution_graph(tie_contribution) +
+  ggtitle(label = "Contribution to Candidates of \nthe Closest-Tied District by State")
+contribution_graph(dem_adv_contribution) +
+  ggtitle(label = "Contribution to Candidates of the Most \nDemocrat-Advantaged District by State")
+contribution_graph(rep_adv_contribution) +
+  ggtitle(label = "Contribution to Candidates of the Most \nRepublican-Advantaged District by State")
 ```
   
