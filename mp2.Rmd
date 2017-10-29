@@ -19,6 +19,26 @@ library(tidyverse)
 ```
 
 ```{r, message=FALSE}
+theme_swing <- function () { 
+    theme(
+      aspect.ratio = 0.618,
+      text = element_text(family = "Avenir"),
+      axis.title.x = element_text(size = 20, color = "black",
+                                  margin = margin(9,0,0,0,"pt")),
+      axis.text.y = element_text(size = 20, color = "black",
+                                  margin = margin(0,6,0,0,"pt")),
+      plot.title = element_text(face = 2, 
+                                size = 30,
+                                margin = margin(0,0,12,0,"pt")),
+      axis.ticks = element_blank(),
+      legend.title = element_blank(),
+      legend.text = element_text(size = 15, color = "black"),
+      panel.grid.major = element_line(color = NA),
+      panel.grid.minor = element_line(color = NA),
+      panel.background = element_blank()
+  )
+}
+
 ct <- house_elections %>%
   filter(state == "CT") %>%
   select(-fec_id, -incumbent, -state) %>%
@@ -126,7 +146,15 @@ swing_dist <- function(state_arg) {
     ggplot(aes(x = district, y = percentage, fill = party)) +
     geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) + 
     scale_fill_manual("legend", values = c("#5DA2F5", "#F77471", "#1EB742")) +
-    ggtitle(label = state_arg)
+    ggtitle(label = state_arg) +
+    scale_x_discrete(name = "District",
+                     labels = NULL,
+                     expand=c(0, 0)) +
+    scale_y_continuous(name = NULL,
+                       breaks = seq(0, 100, 50),
+                       labels = c("0%", "50%", "100%"),
+                       expand=c(0, 0)) +
+    theme_swing()
 }
 
 lapply(swing_states$state, swing_dist)
