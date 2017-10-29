@@ -125,7 +125,8 @@ swing_dist <- function(state_arg) {
     arrange(district) %>% 
     ggplot(aes(x = district, y = percentage, fill = party)) +
     geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) + 
-    scale_fill_manual("legend", values = c("#5DA2F5", "#F77471", "#1EB742"))
+    scale_fill_manual("legend", values = c("#5DA2F5", "#F77471", "#1EB742")) +
+    ggtitle(label = state_arg)
 }
 
 lapply(swing_states$state, swing_dist)
