@@ -6,7 +6,7 @@ output: html_document
 ---
 
 
-## Loading the data
+## Swing States General Votes by District
 
 This project is so interesting and relevant to my life!
 
@@ -84,7 +84,7 @@ comparison <- function(state_arg) {
                           rep_ratio = rep_votes/total_votes)
 }
 
-swing_states <- function(state_arg) {
+swing <- function(state_arg) {
   partydata <- party_by_state(state_arg) 
   winner_party <- partydata[1,]
   dem <- partydata %>% subset(party == "D")
@@ -94,20 +94,41 @@ swing_states <- function(state_arg) {
                           winner = winner_party$party[1],
                           dem_votes = dem$general[1],
                           rep_votes = rep$general[1],
-                          dem_vs_rep = dem_votes/rep_votes,
-                          swing = abs(dem_vs_rep-1))
+                          dem_vs_rep = dem_votes/rep_votes)
 }
 
 states <- house_elections %>% 
   select(state) %>%
   unique()
 
-swing_data <- lapply(states$state, swing_states) %>%
+top_10_swing <- lapply(states$state, swing) %>%
   bind_rows() %>%
-  filter(swing < 0.1) %>%
-  arrange(swing)
+  filter(abs(dem_vs_rep-1) < 0.1) %>%
+  arrange(abs(dem_vs_rep-1))
 
-swing_data
+swing_states <- top_10_swing %>% 
+  select(state) %>%
+  unique()
+
+swing_dist <- function(state_arg) {
+  house_elections %>%
+    filter(state == state_arg) %>%
+    group_by(district) %>% 
+    summarize(N = n(),
+              total = sum(general_votes),
+              D = sum(ifelse(party == "D", general_votes, 0))/total*100,
+              R = sum(ifelse(party == "R", general_votes, 0))/total*100,
+              others = 100-D-R) %>%
+    gather("party", "percentage", 4:6) %>%
+    mutate(party = factor(party, levels = c("D", "R", "others"), 
+                          labels = c("Democrat", "Republican", "others"))) %>%
+    arrange(district) %>% 
+    ggplot(aes(x = district, y = percentage, fill = party)) +
+    geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) + 
+    scale_fill_manual("legend", values = c("#5DA2F5", "#F77471", "#1EB742"))
+}
+
+lapply(swing_states$state, swing_dist)
 
 ```
   
