@@ -110,15 +110,15 @@ swing_district_graph <- function(state_arg) {
     theme_swing()
 }
 
-plots <- lapply(swing_states, swing_district_graph)
+swing_district_plots <- lapply(swing_states, swing_district_graph)
 
 i <- 0
-while (i < length(plots)) {
+while (i < length(swing_district_plots)) {
   i <- i + 1
-  print(plots[[i]])  
+  print(swing_district_plots[[i]])  
 }
 
-district_contribution <- function(state_arg, data_arg) {
+contribution_by_district <- function(state_arg, data_arg, type_arg) {
   if (data_arg == "tie") {
     data <- swing_district(state_arg) %>%
       slice(which.min(abs(D - R)))
@@ -136,16 +136,22 @@ district_contribution <- function(state_arg, data_arg) {
   
   colnames(data)[1] <- "cand_id"
   
-  contributions %>%
-    filter(cand_id %in% data$cand_id) %>%
+  if (is.null(type_arg)) {
+    contribution_type <- contributions %>%
+      filter(cand_id %in% data$cand_id)
+  } else {
+    contribution_type <- contributions %>%
+      filter(cand_id %in% data$cand_id, transaction_type == type_arg)
+  }
+  contribution_type %>%
     select(cand_id, transaction_amt) %>%
     group_by(cand_id) %>%
     summarize(contribution = sum(transaction_amt)) %>%
     inner_join(data, by = "cand_id")
 }
 
-contribution_graph <- function(data_arg) {
-  data <- lapply(swing_states, district_contribution, data_arg) %>%
+contribution_graph <- function(data_arg, type_arg) {
+  data <- lapply(swing_states, contribution_by_district, data_arg, type_arg) %>%
     bind_rows()
   
   parties <- data$party
@@ -157,8 +163,8 @@ contribution_graph <- function(data_arg) {
     }
   }
   
-  data %>% mutate(party = parties) %>%
-    mutate(party = factor(party, levels = c("D", "R", "others"), 
+  data %>% mutate(party = parties,
+                  party = factor(party, levels = c("D", "R", "others"), 
                           labels = c("Democrat", "Republican", "others"))) %>%
     ggplot(aes(x = state, y = contribution, fill = party)) +
     geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
@@ -167,8 +173,8 @@ contribution_graph <- function(data_arg) {
                      limits = swing_states,
                      expand = c(0, 0)) +
     scale_y_continuous(name = "Total Contribution (million)",
-                       breaks = seq(0, 12500000, 2500000),
-                       labels = seq(0, 12.5, 2.5),
+                       breaks = seq(0, 10000000, 2000000),
+                       labels = seq(0, 10, 2),
                        expand = c(0, 0)) +
     theme_swing() +
     theme(plot.title = element_text(face = 2, 
@@ -178,11 +184,38 @@ contribution_graph <- function(data_arg) {
           legend.position = "bottom")
 }
 
-contribution_graph("tie") +
-  ggtitle(label = "Contribution to Candidates of \nthe Closest-Tied District by State")
-contribution_graph("dem_adv") +
-  ggtitle(label = "Contribution to Candidates of the Most \nDemocrat-Advantaged District by State")
-contribution_graph("rep_adv") +
-  ggtitle(label = "Contribution to Candidates of the Most \nRepublican-Advantaged District by State")
+contribution_graph("tie", NULL) +
+  ggtitle(label = "Contribution Related to Candidates of \nthe Most Closely Tied District \nin Each Swing State") +
+  scale_y_continuous(breaks = seq(0, 12500000, 2500000),
+                     labels = seq(0, 12.5, 2.5)) 
+contribution_graph("dem_adv", NULL) +
+  ggtitle(label = "Contribution Related to Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State")
+contribution_graph("rep_adv", NULL) +
+  ggtitle(label = "Contribution Related to Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State")
+
+contribution_graph("tie", "24E") +
+  ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Closely Tied District \nin Each Swing State") +
+  scale_y_continuous(name = "Total Contribution (100k)",
+                     breaks = seq(0, 2400000, 400000),
+                     labels = seq(0, 24, 4))
+contribution_graph("tie", "24A") +
+  ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Closely Tied District \nin Each Swing State")
+
+contribution_graph("dem_adv", "24E") +
+  ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State") +
+  scale_y_continuous(name = "Total Contribution (100k)",
+                     breaks = seq(0, 1000000, 100000),
+                     labels = seq(0, 10, 1))
+contribution_graph("dem_adv", "24A") +
+  ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State")
+
+contribution_graph("rep_adv", "24E") +
+  ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State") +
+  scale_y_continuous(name = "Total Contribution (100k)",
+                     breaks = seq(0, 1000000, 200000),
+                     labels = seq(0, 10, 2))
+contribution_graph("rep_adv", "24A") +
+  ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State")
+
 ```
   
