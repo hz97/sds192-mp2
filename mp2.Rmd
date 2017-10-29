@@ -184,37 +184,49 @@ contribution_graph <- function(data_arg, type_arg) {
           legend.position = "bottom")
 }
 
-contribution_graph("tie", NULL) +
+districts <- c("tie", "dem_adv", "rep_adv")
+
+contribution_plots <- lapply(districts, contribution_graph, NULL)
+
+contribution_plots[[1]] +
   ggtitle(label = "Contribution Related to Candidates of \nthe Most Closely Tied District \nin Each Swing State") +
   scale_y_continuous(breaks = seq(0, 12500000, 2500000),
-                     labels = seq(0, 12.5, 2.5)) 
-contribution_graph("dem_adv", NULL) +
+                     labels = seq(0, 12.5, 2.5))
+
+contribution_plots[[2]] +
   ggtitle(label = "Contribution Related to Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State")
-contribution_graph("rep_adv", NULL) +
+
+contribution_plots[[3]] +
   ggtitle(label = "Contribution Related to Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State")
 
-contribution_graph("tie", "24E") +
+advocation_plots <- lapply(districts, contribution_graph, "24E")
+opposition_plots <- lapply(districts, contribution_graph, "24A")
+
+advocation_plots[[1]] +
   ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Closely Tied District \nin Each Swing State") +
   scale_y_continuous(name = "Total Contribution (100k)",
                      breaks = seq(0, 2400000, 400000),
                      labels = seq(0, 24, 4))
-contribution_graph("tie", "24A") +
+
+opposition_plots[[1]] +
   ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Closely Tied District \nin Each Swing State")
 
-contribution_graph("dem_adv", "24E") +
+advocation_plots[[2]] +
   ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State") +
   scale_y_continuous(name = "Total Contribution (100k)",
                      breaks = seq(0, 1000000, 100000),
                      labels = seq(0, 10, 1))
-contribution_graph("dem_adv", "24A") +
+
+opposition_plots[[2]] +
   ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Democrat-Advantaged District \nin Each Swing State")
 
-contribution_graph("rep_adv", "24E") +
+advocation_plots[[3]] +
   ggtitle(label = "Individual Contribution Advocating Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State") +
   scale_y_continuous(name = "Total Contribution (100k)",
                      breaks = seq(0, 1000000, 200000),
                      labels = seq(0, 10, 2))
-contribution_graph("rep_adv", "24A") +
+
+opposition_plots[[3]] +
   ggtitle(label = "Individual Contribution Opposing Candidates of \nthe Most Republican-Advantaged District \nin Each Swing State")
 
 ```
